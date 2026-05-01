@@ -40,7 +40,7 @@ The user wants this on **all pages** of seven.club. Hardcoding a list of section
 
 1. Any element with `data-track-section="<label>"` (explicit override — wins)
 2. Every `<section>` element on the page
-3. Element label is derived (in order): `data-track-section` → `id` → first non-Webflow class → first `<h1>/<h2>` text → "unnamed"
+3. Element label is derived (in order): `data-track-section` → `id` → first class name not matching `^(w-|section$)` (skips Webflow's auto-generated classes) → first `<h1>/<h2>` text inside (truncated to 50 chars) → "unnamed"
 
 Each section is observed once with `IntersectionObserver` at `threshold: 0.5` (must be 50% on screen). Each section fires its event at most once per page load (the observer disconnects that target after firing).
 
@@ -61,7 +61,7 @@ This avoids inflated numbers from people leaving tabs open in the background —
 
 GA4 Enhanced Measurement already covers 90%. The custom listener adds 25 / 50 / 75 % so we can see the full drop-off curve, not just "did they reach the bottom."
 
-The handler is throttled (rAF-gated) to avoid firing on every pixel of scroll.
+The handler is throttled (rAF-gated) to avoid firing on every pixel of scroll, and **each threshold fires at most once per page load** (a `Set` of fired thresholds gates re-firing).
 
 ## Where the code lives
 
