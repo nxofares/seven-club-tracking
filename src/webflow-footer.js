@@ -51,7 +51,37 @@
     // also check once on load — short pages may already exceed 25%
     requestAnimationFrame(check);
   }
-  // initDwellTracking — Task 6
+  function initDwellTracking() {
+    var thresholds = [30, 60, 120];
+    var fired = new Set();
+    var totalSeconds = 0;
+    var lastTick = (document.visibilityState === 'visible') ? Date.now() : null;
+
+    function flush() {
+      if (lastTick === null) return;
+      var now = Date.now();
+      totalSeconds += (now - lastTick) / 1000;
+      lastTick = now;
+      for (var i = 0; i < thresholds.length; i++) {
+        var t = thresholds[i];
+        if (totalSeconds >= t && !fired.has(t)) {
+          fired.add(t);
+          if (window.gtag) window.gtag('event', 'dwell_time', { seconds: t });
+        }
+      }
+    }
+
+    setInterval(flush, 1000);
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        lastTick = Date.now();
+      } else {
+        flush();
+        lastTick = null;
+      }
+    });
+  }
   // initSectionTracking — Task 7
 
   // ── boot (wired in Task 8) ──────────────────────────────────────────────
