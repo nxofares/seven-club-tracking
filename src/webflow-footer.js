@@ -20,7 +20,37 @@
   }
 
   // ── trackers (added in next tasks) ──────────────────────────────────────
-  // initScrollTracking — Task 5
+  function initScrollTracking() {
+    var thresholds = [25, 50, 75];
+    var fired = new Set();
+    var ticking = false;
+
+    function check() {
+      var doc = document.documentElement;
+      var scrolled = doc.scrollTop + window.innerHeight;
+      var total = doc.scrollHeight;
+      if (total <= 0) { ticking = false; return; }
+      var percent = Math.min(100, Math.floor((scrolled / total) * 100));
+      for (var i = 0; i < thresholds.length; i++) {
+        var t = thresholds[i];
+        if (percent >= t && !fired.has(t)) {
+          fired.add(t);
+          if (window.gtag) window.gtag('event', 'scroll_depth', { percent: t });
+        }
+      }
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        requestAnimationFrame(check);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    // also check once on load — short pages may already exceed 25%
+    requestAnimationFrame(check);
+  }
   // initDwellTracking — Task 6
   // initSectionTracking — Task 7
 
