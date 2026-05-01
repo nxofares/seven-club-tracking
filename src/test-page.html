@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>seven.club tracking — smoke test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; }
+    section { min-height: 100vh; padding: 2rem; border-bottom: 2px solid #ccc; }
+    section:nth-child(odd)  { background: #f6f6f6; }
+    section:nth-child(even) { background: #ececec; }
+    h2 { margin: 0 0 1rem; }
+  </style>
+  <!-- Mock gtag — logs every call to the console instead of sending to GA4 -->
+  <script>
+    window.gtag = function () {
+      console.log('[gtag]', Array.from(arguments));
+    };
+  </script>
+</head>
+<body>
+  <section id="hero">
+    <h2>Hero</h2>
+    <p>Scroll down. Each section should fire one section_reached event when ≥50% on screen. Scroll-depth events fire at 25/50/75 %. Dwell events at 30/60/120 s of foreground time.</p>
+  </section>
+  <section class="membership">
+    <h2>Membership</h2>
+    <p>Long enough that scrolling past it crosses the next scroll threshold.</p>
+  </section>
+  <section data-track-section="recovery">
+    <h2>Recovery (custom label via data-track-section)</h2>
+  </section>
+  <section>
+    <h2>Footer</h2>
+    <p>End of page. Scroll-depth 75 % should have fired by now; GA4's auto 90% would fire here in production.</p>
+  </section>
+
+  <!-- Listener IIFE — same content that ships into Webflow Footer Code -->
+  <script src="./webflow-footer.js"></script>
+</body>
+</html>
