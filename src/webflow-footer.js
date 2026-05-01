@@ -82,7 +82,24 @@
       }
     });
   }
-  // initSectionTracking — Task 7
+  function initSectionTracking() {
+    if (!('IntersectionObserver' in window)) return;
+    var targets = document.querySelectorAll('section, [data-track-section]');
+    if (targets.length === 0) return;
+
+    var observer = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        if (entry.isIntersecting) {
+          var label = deriveSectionLabel(entry.target);
+          if (window.gtag) window.gtag('event', 'section_reached', { section: label });
+          observer.unobserve(entry.target);
+        }
+      }
+    }, { threshold: 0.5 });
+
+    for (var j = 0; j < targets.length; j++) observer.observe(targets[j]);
+  }
 
   // ── boot (wired in Task 8) ──────────────────────────────────────────────
 })();
