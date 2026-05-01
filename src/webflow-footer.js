@@ -101,5 +101,16 @@
     for (var j = 0; j < targets.length; j++) observer.observe(targets[j]);
   }
 
-  // ── boot (wired in Task 8) ──────────────────────────────────────────────
+  // ── boot ────────────────────────────────────────────────────────────────
+  function start() {
+    initScrollTracking();
+    initDwellTracking();
+    initSectionTracking();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
 })();
