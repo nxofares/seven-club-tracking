@@ -19,7 +19,29 @@
     return 'unnamed';
   }
 
-  // ── trackers (added in next tasks) ──────────────────────────────────────
+  // POST a copy of every event to analytics.seven.expert/api/events
+  // alongside the gtag() call. Fire-and-forget: failures (network, ad-block,
+  // endpoint down) are swallowed silently — GA4 path is unaffected.
+  function postEvent(eventName, params) {
+    if (!navigator.sendBeacon) return;
+    try {
+      var sid = '';
+      var match = document.cookie.match(/(?:^|; )session_id=([^;]+)/);
+      if (match) sid = decodeURIComponent(match[1]);
+      var payload = JSON.stringify({
+        event: eventName,
+        params: params,
+        page: location.pathname,
+        session_id: sid
+      });
+      navigator.sendBeacon(
+        'https://analytics.seven.expert/api/events',
+        new Blob([payload], { type: 'application/json' })
+      );
+    } catch (e) { /* never throw */ }
+  }
+
+  // ── trackers ─────────────────────────────────────────────────────────────
   function initScrollTracking() {
     var thresholds = [25, 50, 75];
     var fired = new Set();
@@ -35,7 +57,9 @@
         var t = thresholds[i];
         if (percent >= t && !fired.has(t)) {
           fired.add(t);
-          if (window.gtag) window.gtag('event', 'scroll_depth', { percent: t });
+          var params = { percent: t };
+          if (window.gtag) window.gtag('event', 'scroll_depth', params);
+          postEvent('scroll_depth', params);
         }
       }
       ticking = false;
@@ -51,6 +75,7 @@
     // also check once on load — short pages may already exceed 25%
     requestAnimationFrame(check);
   }
+
   function initDwellTracking() {
     var thresholds = [30, 60, 120];
     var fired = new Set();
@@ -66,7 +91,9 @@
         var t = thresholds[i];
         if (totalSeconds >= t && !fired.has(t)) {
           fired.add(t);
-          if (window.gtag) window.gtag('event', 'dwell_time', { seconds: t });
+          var params = { seconds: t };
+          if (window.gtag) window.gtag('event', 'dwell_time', params);
+          postEvent('dwell_time', params);
         }
       }
     }
@@ -82,6 +109,7 @@
       }
     });
   }
+
   function initSectionTracking() {
     if (!('IntersectionObserver' in window)) return;
     var targets = document.querySelectorAll('section, [data-track-section]');
@@ -92,7 +120,9 @@
         var entry = entries[i];
         if (entry.isIntersecting) {
           var label = deriveSectionLabel(entry.target);
-          if (window.gtag) window.gtag('event', 'section_reached', { section: label });
+          var params = { section: label };
+          if (window.gtag) window.gtag('event', 'section_reached', params);
+          postEvent('section_reached', params);
           observer.unobserve(entry.target);
         }
       }
@@ -103,6 +133,9 @@
 
   // ── boot ────────────────────────────────────────────────────────────────
   function start() {
+    // GA4 fires page_view automatically from the head snippet's gtag('config').
+    // /api/events does not — fire it explicitly here so both stores get parity.
+    postEvent('page_view', {});
     initScrollTracking();
     initDwellTracking();
     initSectionTracking();
